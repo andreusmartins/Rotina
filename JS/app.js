@@ -5,18 +5,63 @@ const storage = {
   studies: "lifeos_study",
   finances: "lifeos_finances",
   weights: "lifeos_weight",
+  workoutDone: "lifeos_workout_done",
+  studyDone: "lifeos_study_done",
+  workoutMedia: "lifeos_workout_media",
+  studyMedia: "lifeos_study_media",
 };
 
 let workouts = JSON.parse(localStorage.getItem(storage.workouts)) || [];
 let studyLog = JSON.parse(localStorage.getItem(storage.studies)) || [];
 let financeLog = JSON.parse(localStorage.getItem(storage.finances)) || [];
 let weightHistory = JSON.parse(localStorage.getItem(storage.weights)) || [];
+let workoutDone = JSON.parse(localStorage.getItem(storage.workoutDone)) || [];
+let studyDone = JSON.parse(localStorage.getItem(storage.studyDone)) || [];
+let workoutMedia = JSON.parse(localStorage.getItem(storage.workoutMedia)) || {};
+let studyMedia = JSON.parse(localStorage.getItem(storage.studyMedia)) || {};
+
+let currentWorkoutDayIndex = 0;
+let currentStudyDayIndex = 0;
+
+const svgImage = (label) =>
+  `data:image/svg+xml;utf8,` +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#00e5ff"/>
+          <stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient>
+      </defs>
+      <rect width="320" height="180" rx="16" fill="#111d33"/>
+      <rect x="12" y="12" width="296" height="156" rx="12" fill="url(#g)" opacity="0.15"/>
+      <circle cx="80" cy="90" r="26" fill="url(#g)"/>
+      <rect x="110" y="80" width="140" height="20" rx="10" fill="url(#g)"/>
+      <text x="160" y="145" font-family="Syne, sans-serif" font-size="16" fill="#e2eaf7" text-anchor="middle">${label}</text>
+    </svg>`
+  );
 
 function syncWindowState() {
   window.workouts = workouts;
   window.studyLog = studyLog;
   window.financeLog = financeLog;
   window.weightHistory = weightHistory;
+}
+
+function saveToStorage(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function normalizeVideoUrl(url) {
+  if (url.includes("youtube.com/watch?v=")) {
+    const id = url.split("watch?v=")[1].split("&")[0];
+    return `https://www.youtube.com/embed/${id}`;
+  }
+  if (url.includes("youtu.be/")) {
+    const id = url.split("youtu.be/")[1].split("?")[0];
+    return `https://www.youtube.com/embed/${id}`;
+  }
+  return url;
 }
 
 const workoutRoutine = [
@@ -33,6 +78,10 @@ const workoutRoutine = [
     ],
     example:
       "Exemplo: supino reto. Deite no banco, pés firmes no chão, desça a barra até tocar o peito e empurre mantendo os cotovelos levemente fechados.",
+    images: [
+      { title: "Supino reto", src: svgImage("Supino reto") },
+      { title: "Tríceps pulley", src: svgImage("Tríceps pulley") },
+    ],
   },
   {
     day: "Terça",
@@ -45,6 +94,10 @@ const workoutRoutine = [
     ],
     example:
       "Exemplo: prancha. Apoie antebraços e pontas dos pés no chão, mantenha o corpo alinhado e contraia o abdômen.",
+    images: [
+      { title: "Corrida", src: svgImage("Corrida") },
+      { title: "Prancha", src: svgImage("Prancha") },
+    ],
   },
   {
     day: "Quarta",
@@ -59,6 +112,10 @@ const workoutRoutine = [
     ],
     example:
       "Exemplo: remada curvada. Incline o tronco, mantenha a coluna neutra e puxe a barra em direção ao umbigo.",
+    images: [
+      { title: "Remada", src: svgImage("Remada") },
+      { title: "Rosca direta", src: svgImage("Rosca direta") },
+    ],
   },
   {
     day: "Quinta",
@@ -73,6 +130,10 @@ const workoutRoutine = [
     ],
     example:
       "Exemplo: elevação lateral. Levante os halteres até a linha dos ombros com cotovelos semiflexionados.",
+    images: [
+      { title: "Elevação lateral", src: svgImage("Elevação lateral") },
+      { title: "Prancha", src: svgImage("Prancha") },
+    ],
   },
   {
     day: "Sexta",
@@ -86,6 +147,10 @@ const workoutRoutine = [
     ],
     example:
       "Exemplo: agachamento livre. Pés na largura dos ombros, desça até o quadril ficar abaixo do joelho e suba mantendo o tronco firme.",
+    images: [
+      { title: "Agachamento", src: svgImage("Agachamento") },
+      { title: "Leg press", src: svgImage("Leg press") },
+    ],
   },
   {
     day: "Sábado",
@@ -98,6 +163,7 @@ const workoutRoutine = [
     ],
     example:
       "Exemplo: corrida leve. Mantenha respiração confortável e ritmo constante sem ficar ofegante.",
+    images: [{ title: "Corrida leve", src: svgImage("Corrida leve") }],
   },
   {
     day: "Domingo",
@@ -105,6 +171,7 @@ const workoutRoutine = [
     items: ["Alongamento leve", "Caminhada opcional", "Hidratação e sono"],
     example:
       "Exemplo: alongamento. Segure cada posição por 20–30s sem dor.",
+    images: [{ title: "Alongamento", src: svgImage("Alongamento") }],
   },
 ];
 
@@ -116,6 +183,7 @@ const studyRoutine = [
     note: "Sessão sugerida: 10 min teoria, 40 min código, 10 min revisão.",
     example:
       "Exemplo: implemente uma classe `Pessoa` com atributos e um método `apresentar()`.",
+    images: [{ title: "Java", src: svgImage("Java") }],
   },
   {
     day: "Terça",
@@ -124,6 +192,7 @@ const studyRoutine = [
     note: "Use 30 min leitura e 30 min listening.",
     example:
       "Exemplo: assistir um vídeo curto e anotar 5 palavras novas.",
+    images: [{ title: "Inglês", src: svgImage("Inglês") }],
   },
   {
     day: "Quarta",
@@ -132,6 +201,7 @@ const studyRoutine = [
     note: "Crie um mini componente com input e lista.",
     example:
       "Exemplo: criar um componente `todo-list` com `*ngFor`.",
+    images: [{ title: "Angular", src: svgImage("Angular") }],
   },
   {
     day: "Quinta",
@@ -140,6 +210,7 @@ const studyRoutine = [
     note: "Priorize problemas simples com console.",
     example:
       "Exemplo: criar um programa de lista de tarefas no console.",
+    images: [{ title: "Java OO", src: svgImage("Java OO") }],
   },
   {
     day: "Sexta",
@@ -148,6 +219,7 @@ const studyRoutine = [
     note: "Fale em voz alta por 10–15 min.",
     example:
       "Exemplo: repetir frases e gravar sua voz.",
+    images: [{ title: "Inglês fala", src: svgImage("Speaking") }],
   },
   {
     day: "Sábado",
@@ -156,6 +228,7 @@ const studyRoutine = [
     note: "Monte algo simples de ponta a ponta.",
     example:
       "Exemplo: criar uma lista de tarefas com backend simulado.",
+    images: [{ title: "Projeto", src: svgImage("Projeto") }],
   },
   {
     day: "Domingo",
@@ -164,6 +237,7 @@ const studyRoutine = [
     note: "No máximo 30 min.",
     example:
       "Exemplo: revisar 3 conceitos-chave da semana.",
+    images: [{ title: "Revisão", src: svgImage("Revisão") }],
   },
 ];
 
@@ -232,6 +306,7 @@ function selectDay(pickerId, index) {
 function renderWorkoutDay(index) {
   const entry = workoutRoutine[index];
   if (!entry) return;
+  currentWorkoutDayIndex = index;
   document.getElementById(
     "workoutDayTitle"
   ).textContent = `${entry.day} • ${entry.title}`;
@@ -248,11 +323,15 @@ function renderWorkoutDay(index) {
     list.appendChild(li);
   }
   selectDay("workoutDayPicker", index);
+  renderWorkoutMedia(entry, index);
+  renderWorkoutDoneStatus();
+  renderWorkoutDoneLog();
 }
 
 function renderStudyDay(index) {
   const entry = studyRoutine[index];
   if (!entry) return;
+  currentStudyDayIndex = index;
   document.getElementById(
     "studyDayTitle"
   ).textContent = `${entry.day} • ${entry.title}`;
@@ -271,6 +350,175 @@ function renderStudyDay(index) {
     list.appendChild(li);
   }
   selectDay("studyDayPicker", index);
+  renderStudyMedia(entry, index);
+  renderStudyDoneStatus();
+  renderStudyDoneLog();
+}
+
+function renderWorkoutMedia(entry, index) {
+  const container = document.getElementById("workoutMedia");
+  if (!container) return;
+  container.innerHTML = "";
+  const mediaImages = entry.images || [];
+  const videoUrl = workoutMedia[index]?.video || "";
+  mediaImages.forEach((img) => {
+    const card = document.createElement("div");
+    card.className = "media-card";
+    card.innerHTML = `<img src="${img.src}" alt="${img.title}" /><div class="media-title">${img.title}</div>`;
+    container.appendChild(card);
+  });
+  if (videoUrl) {
+    const card = document.createElement("div");
+    card.className = "media-card";
+    card.innerHTML = `<iframe src="${videoUrl}" allowfullscreen></iframe><div class="media-title">Vídeo</div>`;
+    container.appendChild(card);
+  } else {
+    const card = document.createElement("div");
+    card.className = "media-card";
+    card.innerHTML = `<div class="media-title">Sem vídeo ainda. Cole um link acima.</div>`;
+    container.appendChild(card);
+  }
+}
+
+function renderStudyMedia(entry, index) {
+  const container = document.getElementById("studyMedia");
+  if (!container) return;
+  container.innerHTML = "";
+  const mediaImages = entry.images || [];
+  const videoUrl = studyMedia[index]?.video || "";
+  mediaImages.forEach((img) => {
+    const card = document.createElement("div");
+    card.className = "media-card";
+    card.innerHTML = `<img src="${img.src}" alt="${img.title}" /><div class="media-title">${img.title}</div>`;
+    container.appendChild(card);
+  });
+  if (videoUrl) {
+    const card = document.createElement("div");
+    card.className = "media-card";
+    card.innerHTML = `<iframe src="${videoUrl}" allowfullscreen></iframe><div class="media-title">Vídeo</div>`;
+    container.appendChild(card);
+  } else {
+    const card = document.createElement("div");
+    card.className = "media-card";
+    card.innerHTML = `<div class="media-title">Sem vídeo ainda. Cole um link acima.</div>`;
+    container.appendChild(card);
+  }
+}
+
+function saveWorkoutVideo() {
+  const input = document.getElementById("workoutVideoUrl");
+  const url = normalizeVideoUrl(input.value.trim());
+  if (!url) {
+    showToast("⚠️ Cole um link de vídeo.");
+    return;
+  }
+  workoutMedia[currentWorkoutDayIndex] = { video: url };
+  saveToStorage(storage.workoutMedia, workoutMedia);
+  renderWorkoutMedia(workoutRoutine[currentWorkoutDayIndex], currentWorkoutDayIndex);
+  input.value = "";
+  showToast("🎥 Vídeo salvo!");
+}
+
+function saveStudyVideo() {
+  const input = document.getElementById("studyVideoUrl");
+  const url = normalizeVideoUrl(input.value.trim());
+  if (!url) {
+    showToast("⚠️ Cole um link de vídeo.");
+    return;
+  }
+  studyMedia[currentStudyDayIndex] = { video: url };
+  saveToStorage(storage.studyMedia, studyMedia);
+  renderStudyMedia(studyRoutine[currentStudyDayIndex], currentStudyDayIndex);
+  input.value = "";
+  showToast("🎥 Vídeo salvo!");
+}
+
+function markWorkoutDone() {
+  const entry = workoutRoutine[currentWorkoutDayIndex];
+  const key = `${today}-${entry.day}`;
+  if (workoutDone.find((d) => d.key === key)) {
+    showToast("✅ Já marcado hoje.");
+    return;
+  }
+  workoutDone.push({
+    key,
+    date: today,
+    day: entry.day,
+    title: entry.title,
+  });
+  saveToStorage(storage.workoutDone, workoutDone);
+  renderWorkoutDoneStatus();
+  renderWorkoutDoneLog();
+  showToast("🔥 Treino marcado!");
+}
+
+function markStudyDone() {
+  const entry = studyRoutine[currentStudyDayIndex];
+  const key = `${today}-${entry.day}`;
+  if (studyDone.find((d) => d.key === key)) {
+    showToast("✅ Já marcado hoje.");
+    return;
+  }
+  studyDone.push({
+    key,
+    date: today,
+    day: entry.day,
+    title: entry.title,
+  });
+  saveToStorage(storage.studyDone, studyDone);
+  renderStudyDoneStatus();
+  renderStudyDoneLog();
+  showToast("📘 Estudo marcado!");
+}
+
+function renderWorkoutDoneStatus() {
+  const entry = workoutRoutine[currentWorkoutDayIndex];
+  const status = document.getElementById("workoutDoneStatus");
+  const key = `${today}-${entry.day}`;
+  status.textContent = workoutDone.find((d) => d.key === key)
+    ? "feito hoje"
+    : "não feito hoje";
+}
+
+function renderStudyDoneStatus() {
+  const entry = studyRoutine[currentStudyDayIndex];
+  const status = document.getElementById("studyDoneStatus");
+  const key = `${today}-${entry.day}`;
+  status.textContent = studyDone.find((d) => d.key === key)
+    ? "feito hoje"
+    : "não feito hoje";
+}
+
+function renderWorkoutDoneLog() {
+  const el = document.getElementById("workoutDoneLog");
+  if (!el) return;
+  const items = workoutDone.slice().reverse().slice(0, 8);
+  if (!items.length) {
+    el.innerHTML = '<div class="done-item"><strong>Sem histórico ainda.</strong></div>';
+    return;
+  }
+  el.innerHTML = items
+    .map(
+      (item) =>
+        `<div class="done-item"><strong>${item.day}</strong><span>${item.title} • ${item.date}</span></div>`
+    )
+    .join("");
+}
+
+function renderStudyDoneLog() {
+  const el = document.getElementById("studyDoneLog");
+  if (!el) return;
+  const items = studyDone.slice().reverse().slice(0, 8);
+  if (!items.length) {
+    el.innerHTML = '<div class="done-item"><strong>Sem histórico ainda.</strong></div>';
+    return;
+  }
+  el.innerHTML = items
+    .map(
+      (item) =>
+        `<div class="done-item"><strong>${item.day}</strong><span>${item.title} • ${item.date}</span></div>`
+    )
+    .join("");
 }
 
 function saveWorkout() {

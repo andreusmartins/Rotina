@@ -92,6 +92,30 @@
             <ul id="workoutDayList" class="routine-list"></ul>
           </div>
           <div class="routine-card">
+            <h4>Imagens e vídeos do dia</h4>
+            <div id="workoutMedia" class="media-grid"></div>
+            <div class="media-actions">
+              <input
+                type="url"
+                id="workoutVideoUrl"
+                placeholder="Cole o link do vídeo (YouTube embed)"
+              />
+              <button class="btn btn-ghost" onclick="saveWorkoutVideo()">
+                Salvar vídeo para este dia
+              </button>
+            </div>
+          </div>
+          <div class="routine-card">
+            <h4>Feito no dia</h4>
+            <div class="done-actions">
+              <button class="btn btn-primary" onclick="markWorkoutDone()">
+                ✅ Feito hoje
+              </button>
+              <span class="muted-text" id="workoutDoneStatus"></span>
+            </div>
+            <div id="workoutDoneLog" class="done-log"></div>
+          </div>
+          <div class="routine-card">
             <h4>Estrutura do treino</h4>
             <ul class="routine-list">
               <li><strong>Tempo total:</strong> 45–55 min</li>
@@ -193,6 +217,30 @@
             <h4 id="studyDayTitle">Selecione um dia</h4>
             <ul id="studyDayList" class="routine-list"></ul>
             <div id="studyDayNote" class="routine-note"></div>
+          </div>
+          <div class="routine-card">
+            <h4>Imagens e vídeos do dia</h4>
+            <div id="studyMedia" class="media-grid"></div>
+            <div class="media-actions">
+              <input
+                type="url"
+                id="studyVideoUrl"
+                placeholder="Cole o link do vídeo (YouTube embed)"
+              />
+              <button class="btn btn-ghost" onclick="saveStudyVideo()">
+                Salvar vídeo para este dia
+              </button>
+            </div>
+          </div>
+          <div class="routine-card">
+            <h4>Feito no dia</h4>
+            <div class="done-actions">
+              <button class="btn btn-primary" onclick="markStudyDone()">
+                ✅ Feito hoje
+              </button>
+              <span class="muted-text" id="studyDoneStatus"></span>
+            </div>
+            <div id="studyDoneLog" class="done-log"></div>
           </div>
           <div class="routine-card">
             <h4>Horário ideal no dia</h4>

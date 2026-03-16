@@ -681,6 +681,75 @@ canvas {
   color: var(--muted);
 }
 
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.media-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.media-card img {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.media-card iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 8px;
+}
+
+.media-title {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.media-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.done-log {
+  display: grid;
+  gap: 8px;
+}
+
+.done-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.done-item strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .weight-summary {
   margin-top: 18px;
 }
